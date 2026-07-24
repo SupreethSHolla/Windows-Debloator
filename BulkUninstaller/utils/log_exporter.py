@@ -10,10 +10,15 @@ def export_log_txt(lines, path):
 def export_log_csv(lines, path):
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["Timestamp", "Message"])
+        writer.writerow(["Timestamp", "Category", "Message"])
         for line in lines:
             if "] " in line:
-                t, m = line.split("] ", 1)
-                writer.writerow([t.strip("["), m])
+                timestamp, remainder = line.split("] ", 1)
+                category = ""
+                message = remainder
+                if remainder.startswith("[") and "] " in remainder:
+                    category, message = remainder.split("] ", 1)
+                    category = category.strip("[")
+                writer.writerow([timestamp.strip("["), category, message])
             else:
-                writer.writerow(["", line])
+                writer.writerow(["", "", line])

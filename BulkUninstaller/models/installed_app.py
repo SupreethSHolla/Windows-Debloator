@@ -8,7 +8,8 @@ class InstalledApp:
         uninstall_string,
         estimated_size_mb,
         is_msi,
-        registry_path
+        registry_path,
+        icon_path=None,
     ):
         self.name = name
         self.version = version
@@ -18,3 +19,4 @@ class InstalledApp:
         self.estimated_size_mb = estimated_size_mb
         self.is_msi = is_msi
         self.registry_path = registry_path
+        self.icon_path = icon_path

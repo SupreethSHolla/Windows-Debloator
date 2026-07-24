@@ -1,0 +1,4 @@
+[12:49:52] Uninstalling 1/1: Copilot
+[12:49:52] Command: "C:\Program Files (x86)\Microsoft\Copilot\Application\150.0.4078.65\Installer\copilot_setup.exe" --uninstall --mscopilot --channel=stable --system-level --verbose-logging
+[12:50:46] Result for Copilot: Exit code 19
+[13:07:27] [Scan] Scanning installed applications...

@@ -26,3 +26,11 @@ def read_value(key, name):
         return value
     except Exception:
         return None
+
+
+def close_key(key):
+    if key:
+        try:
+            key.Close()
+        except OSError:
+            pass

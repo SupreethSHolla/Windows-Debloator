@@ -1,29 +1,29 @@
 from PySide6.QtCore import QThread, Signal
-from BulkUninstaller.core.uninstall_manager import UninstallManager
+
+from BulkUninstaller.core.install_manager import InstallManager
 from BulkUninstaller.utils.logger import Logger
 
 
-class UninstallWorker(QThread):
+class InstallWorker(QThread):
     log_signal = Signal(str)
     progress_signal = Signal(int, int, str)
     finished_signal = Signal(list)
 
-    def __init__(self, apps, msi_silent=False):
+    def __init__(self, packages, silent=False):
         super().__init__()
-        self.apps = apps
-        self.msi_silent = msi_silent
+        self.packages = packages
+        self.silent = silent
         self._cancel_requested = False
 
     def request_cancel(self):
         self._cancel_requested = True
 
     def run(self):
-        logger = Logger(ui_callback=self.log_signal.emit, category="Uninstall")
-        manager = UninstallManager(
+        logger = Logger(ui_callback=self.log_signal.emit, category="Install")
+        manager = InstallManager(
             logger=logger.log,
-            msi_silent=self.msi_silent,
+            silent=self.silent,
             should_cancel=lambda: self._cancel_requested,
             progress_callback=self.progress_signal.emit,
         )
-        results = manager.uninstall_apps_sequentially(self.apps)
-        self.finished_signal.emit(results)
+        self.finished_signal.emit(manager.install_packages_sequentially(self.packages))

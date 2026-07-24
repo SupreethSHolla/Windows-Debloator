@@ -1,7 +1,8 @@
 import winreg
-from core.registry_reader import open_key, enum_subkeys, read_value
-from core.size_calculator import get_folder_size_mb
-from models.installed_app import InstalledApp
+from BulkUninstaller.core.registry_reader import close_key, enum_subkeys, open_key, read_value
+from BulkUninstaller.core.size_calculator import get_folder_size_mb
+from BulkUninstaller.models.installed_app import InstalledApp
+from BulkUninstaller.utils.icon_utils import resolve_icon_path
 
 
 UNINSTALL_PATHS = [
@@ -28,35 +29,40 @@ def scan_installed_apps():
             if not key:
                 continue
 
-            name = read_value(key, "DisplayName")
-            uninstall = read_value(key, "UninstallString")
-            if not name or not uninstall:
-                continue
+            try:
+                name = read_value(key, "DisplayName")
+                uninstall = read_value(key, "UninstallString")
+                if not name or not uninstall:
+                    continue
 
-            if read_value(key, "SystemComponent") == 1:
-                continue
+                if read_value(key, "SystemComponent") == 1:
+                    continue
 
-            version = read_value(key, "DisplayVersion")
-            publisher = read_value(key, "Publisher")
-            location = read_value(key, "InstallLocation")
-            size_kb = read_value(key, "EstimatedSize")
-            is_msi = read_value(key, "WindowsInstaller") == 1
+                version = read_value(key, "DisplayVersion")
+                publisher = read_value(key, "Publisher")
+                location = read_value(key, "InstallLocation")
+                display_icon = read_value(key, "DisplayIcon")
+                size_kb = read_value(key, "EstimatedSize")
+                is_msi = read_value(key, "WindowsInstaller") == 1
 
-            size_mb = (
-                get_folder_size_mb(location)
-                or (round(size_kb / 1024, 2) if size_kb else None)
-            )
+                size_mb = (
+                    get_folder_size_mb(location)
+                    or (round(size_kb / 1024, 2) if size_kb else None)
+                )
 
-            if is_msi and uninstall.startswith("{"):
-                uninstall = f"msiexec /x {uninstall}"
+                if is_msi and uninstall.startswith("{"):
+                    uninstall = f"msiexec /x {uninstall}"
 
-            key_id = (name, uninstall)
-            if key_id in apps:
-                continue
+                key_id = (name, uninstall)
+                if key_id not in apps:
+                    apps[key_id] = InstalledApp(
+                        name, version, publisher, location,
+                        uninstall, size_mb, is_msi, full,
+                        resolve_icon_path(display_icon, location),
+                    )
+            finally:
+                close_key(key)
 
-            apps[key_id] = InstalledApp(
-                name, version, publisher, location,
-                uninstall, size_mb, is_msi, full
-            )
+        close_key(base)
 
     return list(apps.values())

@@ -1,20 +1,32 @@
 import subprocess
 import time
-from core.uninstall_result import UninstallResult
+from BulkUninstaller.core.uninstall_result import UninstallResult
 
 
 class UninstallManager:
-    def __init__(self, logger=print, msi_silent=False):
+    def __init__(self, logger=print, msi_silent=False, should_cancel=None, progress_callback=None):
         self.logger = logger
         self.msi_silent = msi_silent
+        self.should_cancel = should_cancel or (lambda: False)
+        self.progress_callback = progress_callback
 
     def uninstall_apps_sequentially(self, apps):
         results = []
 
-        for app in apps:
-            self.logger(f"Uninstalling: {app.name}")
+        total = len(apps)
+        for index, app in enumerate(apps, start=1):
+            if self.should_cancel():
+                self.logger("Cancellation requested; remaining applications were not started.")
+                break
+            if self.progress_callback:
+                self.progress_callback(index, total, app.name)
+            self.logger(f"Uninstalling {index}/{total}: {app.name}")
             result = self._uninstall_one(app)
             results.append(result)
+            detail = result.message
+            if result.reboot_required:
+                detail += " (restart required)"
+            self.logger(f"Result for {app.name}: {detail}")
 
         return results
 
@@ -24,11 +36,14 @@ class UninstallManager:
         if app.is_msi and self.msi_silent and "/qn" not in cmd.lower():
             cmd += " /qn"
 
+        self.logger(f"Command: {cmd}")
+
         try:
             start = time.time()
             proc = subprocess.run(
                 cmd,
                 shell=True,
+                text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
@@ -44,10 +59,14 @@ class UninstallManager:
                     reboot
                 )
 
+            details = f"Exit code {proc.returncode}"
+            output = (proc.stderr or proc.stdout).strip()
+            if output:
+                details += f": {output[:500]}"
             return UninstallResult(
                 app.name,
                 False,
-                f"Exit code {proc.returncode}"
+                details
             )
 
         except Exception as e:
