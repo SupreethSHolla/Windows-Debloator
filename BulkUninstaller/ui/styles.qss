@@ -35,7 +35,7 @@ QLineEdit, QTextEdit, QTableWidget {
 }
 
 QLineEdit:focus, QTextEdit:focus, QTableWidget:focus {
-    border: 1px solid #60a5fa;
+    border: 1px solid #4d79af;
 }
 
 QHeaderView::section {

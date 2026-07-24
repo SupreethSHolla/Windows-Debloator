@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
-from BulkUninstaller.utils.path_utils import resolve_project_path
+from BulkUninstaller.utils.path_utils import resolve_app_data_path
 
 
 class Logger:
@@ -9,7 +9,7 @@ class Logger:
         self.ui_callback = ui_callback
         self.category = category
         self.logfile = (
-            resolve_project_path("logs", "uninstall_log.txt")
+            resolve_app_data_path("logs", "uninstall_log.txt")
             if logfile is None else Path(logfile)
         )
 
